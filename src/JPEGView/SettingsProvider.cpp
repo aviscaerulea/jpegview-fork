@@ -137,10 +137,9 @@ CSettingsProvider::CSettingsProvider(void) {
 	else {
 		m_eCPUAlgorithm = Helpers::ProbeCPU();
 	}
-	m_nNumCores = GetInt(_T("CPUCoresUsed"), 0, 0, 4);
+	m_nNumCores = GetInt(_T("CPUCoresUsed"), 0, 0, 16);
 	if (m_nNumCores == 0) {
 		m_nNumCores = Helpers::NumCoresPerPhysicalProc();
-		if (m_nNumCores > 4) m_nNumCores = 4;
 	}
 
 	CString sDownSampling = GetString(_T("DownSamplingFilter"), _T("BestQuality"));

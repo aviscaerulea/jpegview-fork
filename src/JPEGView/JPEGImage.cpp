@@ -14,9 +14,12 @@
 #include <math.h>
 #include <assert.h>
 
-// Hacky workaround.  Look at comment block in CJPEGImage::Resample()
-// undefine this flag to investigate which optimization might cause that particular failure (TODO)
-#define AVX_SSE_FREEZE_FALLBACK
+// 元のワークアラウンド: AVX2 使用時に >3200px でフリーズするバグの回避
+// 根本原因: ApplyFilterAVX.cpp が /arch:AVX でコンパイルされていたが、
+// AVX2 整数 intrinsics を使用しており ISA 不整合が発生していた。
+// プロジェクト全体を /arch:AVX2 に統一したため、ワークアラウンドは不要。
+// フリーズが再発する場合は以下のコメントを外すこと:
+// #define AVX_SSE_FREEZE_FALLBACK
 
 ///////////////////////////////////////////////////////////////////////////////////
 // Static helpers
