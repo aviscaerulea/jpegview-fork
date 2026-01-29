@@ -1,0 +1,27 @@
+## 主な変更点
+
+- HEIC 内部デコード対応（libheif）、デコード失敗時は WIC フォールバック
+- AVX2 命令セット有効化（x64）
+- パフォーマンス最適化
+  - スレッド数上限を 16→64 に拡大（ProcessingThreadPool）
+  - AVIF デコーダのスレッド数を INI 設定値に変更
+  - mimalloc メモリアロケータを統合（マルチスレッド環境でのメモリ割り当て最適化）
+  - AlphaBlendBackground 整数演算化
+- 物理コア数検出を Windows API に変更（AMD Ryzen 対応）
+- About ダイアログ改善（表示領域拡大、README リンク対応、fork 版 URL 追加）
+- INI デフォルト値変更（IniEditor→system、NavigateWithMouseWheel→true）
+- サードパーティライブラリを最新安定版に更新（セキュリティ修正含む）
+
+## サードパーティライブラリ バージョン
+
+- libjpeg-turbo 3.1.3
+- libpng 1.6.54 (APNG 対応)
+- libwebp 1.6.0
+- libjxl 0.11.1
+- libheif 1.21.2
+- libavif 1.3.0
+- dav1d 1.5.3
+- LibRaw 0.22.0
+- lcms2 2.18
+
+フォーク元: https://github.com/sylikc/jpegview
