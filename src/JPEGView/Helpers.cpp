@@ -252,32 +252,33 @@ GiveUp:
 }
 
 // returns if the CPU supports some form of hardware multiprocessing, e.g. hyperthreading or multicore
-static bool CPUSupportsHWMultiprocessing(void) {   
-	if (ProbeCPU() >= CPU_SSE) {
-		int output[4];
-		__cpuid(output, 1);
-		return (output[3] & 0x10000000);
-	} else {
-		return false;
-	}  
-}
-
+// Windows API で物理コア数を取得（Intel/AMD 両対応）
 int NumCoresPerPhysicalProc(void) {
-	if (!CPUSupportsHWMultiprocessing()) {
+	DWORD bufLen = 0;
+	GetLogicalProcessorInformation(NULL, &bufLen);
+	if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+		return 1;
+
+	SYSTEM_LOGICAL_PROCESSOR_INFORMATION* buffer =
+		(SYSTEM_LOGICAL_PROCESSOR_INFORMATION*)new(std::nothrow) uint8[bufLen];
+	if (buffer == NULL)
+		return 1;
+
+	if (!GetLogicalProcessorInformation(buffer, &bufLen)) {
+		delete[] (uint8*)buffer;
 		return 1;
 	}
 
-	int output[4];
+	int physicalCores = 0;
+	DWORD count = bufLen / sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);
+	for (DWORD i = 0; i < count; i++) {
+		if (buffer[i].Relationship == RelationProcessorCore) {
+			physicalCores++;
+		}
+	}
 
-	// check if cpuid supports leaf 4
-	__cpuid(output, 0);
-	if (output[0] < 4)
-		return 1; // not support, single core
-
-	// start with index = 0; Leaf 4 reports
-	__cpuidex(output, 4, 0);
-
-	return (int)((output[0] & 0xFC000000) >> 26) + 1;
+	delete[] (uint8*)buffer;
+	return (physicalCores > 0) ? physicalCores : 1;
 }
 
 bool PatternMatch(LPCTSTR & sMatchingPattern, LPCTSTR sString, LPCTSTR sPattern) {
