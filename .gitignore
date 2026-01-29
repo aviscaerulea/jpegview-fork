@@ -36,3 +36,9 @@ ipch/
 *.cachefile
 *.VC.db
 *.VC.VC.opendb
+
+# VS upgrade log
+UpgradeLog.htm
+
+# Claude Code
+CLAUDE.md
