@@ -22,6 +22,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `35bc05d` | INI コメントの日本語化改善、デフォルト値変更（IniEditor→system、NavigateWithMouseWheel→true） |
 | `c97922f` | サードパーティライブラリ更新: libjpeg-turbo 3.1.3, libpng 1.6.54 (APNG パッチ対応), zlib 1.3.1.2, libwebp 1.6.0, libjxl 0.11.1, libheif 1.21.2, dav1d 1.5.3, LibRaw 0.22.0, lcms2 2.18 |
 | `5715140` | パフォーマンス最適化: スレッド数拡大（16→64）、AVIF デコーダ最適化、mimalloc 統合 |
+| `17377eb` | PDF 表紙プレビュー機能追加（PDFium ベース）: スムージング有効、DPI 上限撤廃、FPDF_LoadCustomDocument によるファイルベース読み込み、post-build 自動コピー整備 |
 
 ### サードパーティライブラリ バージョン比較
 
@@ -38,6 +39,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | **dav1d** | 1.5.1 | **1.5.3** | 小更新 |
 | **LibRaw** | 0.21.1 | **0.22.0** | DNG 1.7 対応追加 |
 | **lcms2** | 2.15 | **2.18** | セキュリティ修正含む |
+| **PDFium** | - | **（プリビルト）** | Chromium プロジェクトの PDF レンダリングライブラリ。MSVC ランタイム不要 |
 
 ## ビルド
 
@@ -142,6 +144,7 @@ JPEGView は mimalloc メモリアロケータを使用してメモリ割り当�
 | HEIFWrapper | libheif + libde265 | HEIF/HEIC | Yes |
 | AVIFWrapper | libavif + dav1d | AVIF | Yes |
 | RAWWrapper | LibRaw | Camera RAW | Yes |
+| PdfReader | PDFium | PDF（表紙のみ） | Yes |
 | PsdReader | 独自実装 | PSD/PSB | No |
 | ReaderBMP/TGA | 独自実装 | BMP, TGA | No |
 

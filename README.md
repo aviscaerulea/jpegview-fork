@@ -17,6 +17,7 @@ JPEGView has built-in support the following formats:
 * Popular: JPEG, GIF
 * Lossless: BMP, PNG, TIFF, PSD
 * Web: WEBP, JXL, HEIF/HEIC, AVIF
+* Documents: PDF (cover page preview)
 * Legacy: TGA, WDP, HDP, JXR
 * Camera RAW formats:
   * Adobe (DNG), Canon (CRW, CR2, CR3), Nikon (NEF, NRW), Sony (ARW, SR2)
