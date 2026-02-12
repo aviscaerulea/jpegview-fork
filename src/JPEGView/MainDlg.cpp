@@ -574,6 +574,20 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 		HelpersGUI::DrawTextBordered(dc, buff, GetZoomTextRect(imageProcessingArea), DT_RIGHT);
 	}
 
+	// PDF プレビューヒント表示
+	if (m_pCurrentImage != NULL && m_pCurrentImage->GetImageFormat() == IF_PDF) {
+		dc.SetTextColor(CSettingsProvider::This().ColorGUI());
+		HelpersGUI::SelectDefaultFileNameFont(dc);
+		CRect hintRect(
+			imageProcessingArea.left,
+			imageProcessingArea.bottom - HelpersGUI::ScaleToScreen(25),
+			imageProcessingArea.right - HelpersGUI::ScaleToScreen(10),
+			imageProcessingArea.bottom - HelpersGUI::ScaleToScreen(5));
+		HelpersGUI::DrawTextBordered(dc,
+			CNLS::GetString(_T("Open with associated app (Enter)")),
+			hintRect, DT_RIGHT);
+	}
+
 	// let crop controller and panels paint its stuff
 	m_pCropCtl->OnPaint(dc);
 	m_pPanelMgr->OnPostPaint(dc);

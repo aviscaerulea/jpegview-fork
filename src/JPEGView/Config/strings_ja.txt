@@ -508,3 +508,6 @@ Zoom to Selection	選択範囲を拡大
 //! * Total (Strings + Menu) = 429
 //! * Done = 429
 //! * Missing = 0 (0%)
+
+// PDF preview hint
+Open with associated app (Enter)	関連付けアプリで開く（Enter キー）
