@@ -24,6 +24,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `5715140` | パフォーマンス最適化: スレッド数拡大（16→64）、AVIF デコーダ最適化、mimalloc 統合 |
 | `17377eb` | PDF 表紙プレビュー機能追加（PDFium ベース）: スムージング有効、DPI 上限撤廃、FPDF_LoadCustomDocument によるファイルベース読み込み、post-build 自動コピー整備 |
 | `18800bb` | PDF プレビュー時の Enter キー操作追加: OS 関連付けアプリで開く機能（ShellExecute）|
+| `fb53694` | PDF プレビュー時のヒントテキスト表示追加: 画面右下に Enter キーの操作ガイドを表示（ローカライズ対応）|
 
 ### サードパーティライブラリ バージョン比較
 
