@@ -25,6 +25,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `17377eb` | PDF 表紙プレビュー機能追加（PDFium ベース）: スムージング有効、DPI 上限撤廃、FPDF_LoadCustomDocument によるファイルベース読み込み、post-build 自動コピー整備 |
 | `18800bb` | PDF プレビュー時の Enter キー操作追加: OS 関連付けアプリで開く機能（ShellExecute）|
 | `fb53694` | PDF プレビュー時のヒントテキスト表示追加: 画面右下に Enter キーの操作ガイドを表示（ローカライズ対応）|
+| `d2da9ca` | HEIF デコーダのスレッド並列化追加: libheif の set_max_decoding_threads API で INI 設定の CPUCoresUsed を使用 |
 
 ### サードパーティライブラリ バージョン比較
 
@@ -182,6 +183,7 @@ Windows Template Library (WTL) ベース。`Panel` / `PanelMgr` による UI パ
 - `ImageLoadThread`（`CWorkThread` 派生）で非同期画像読み込み
 - `ProcessingThreadPool` で物理コア数分の並列画像処理（上限 64、INI で設定可能）
 - AVIF デコーダのスレッド数も INI 設定値を使用（`CPUCoresUsed`）
+- HEIF デコーダのスレッド数も INI 設定値を使用（`CPUCoresUsed`）
 - 先読みバッファリング（前後の画像をプリロード）
 
 ### パフォーマンス最適化
