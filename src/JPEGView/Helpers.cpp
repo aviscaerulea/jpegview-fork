@@ -269,16 +269,21 @@ int NumCoresPerPhysicalProc(void) {
 		return 1;
 	}
 
-	int physicalCores = 0;
+	int logicalProcessors = 0;
 	DWORD count = bufLen / sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);
 	for (DWORD i = 0; i < count; i++) {
 		if (buffer[i].Relationship == RelationProcessorCore) {
-			physicalCores++;
+			// ProcessorMask のビットカウントを加算（各コアの論理プロセッサ数）
+			DWORD_PTR mask = buffer[i].ProcessorMask;
+			while (mask) {
+				logicalProcessors += (mask & 1);
+				mask >>= 1;
+			}
 		}
 	}
 
 	delete[] (uint8*)buffer;
-	return (physicalCores > 0) ? physicalCores : 1;
+	return (logicalProcessors > 0) ? logicalProcessors : 1;
 }
 
 bool PatternMatch(LPCTSTR & sMatchingPattern, LPCTSTR sString, LPCTSTR sPattern) {
