@@ -28,6 +28,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `d2da9ca` | HEIF デコーダのスレッド並列化追加: libheif の set_max_decoding_threads API で INI 設定の CPUCoresUsed を使用 |
 | `86f89af` | CPU コア数検出を論理コア数（ハイパースレッディング含む）に変更: ProcessorMask ビットカウントで論理プロセッサ数を自動検出 |
 | `497fec1` | Release\|x64 ビルド最適化設定統一: WICLoader PDB 無効化、JPEGView 最適化オプション追加（StringPooling, FunctionLevelLinking, IntrinsicFunctions, OptimizeReferences, EnableCOMDATFolding）、pdfium.lib インポートライブラリ生成・配置 |
+| `5a87d08` | mimalloc.lib を git 管理可能ディレクトリに配置: pdfium パターンで mimalloc\lib64 に配置、LibraryPath に追加してクリーンビルド対応 |
 
 ### サードパーティライブラリ バージョン比較
 
