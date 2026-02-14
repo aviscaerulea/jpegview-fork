@@ -48,8 +48,7 @@ DisplayMonitor=-1
 ; AutoDetect で最適なアルゴリズムを自動選択する
 CPUType=AutoDetect
 
-; 使用する CPU コア数。0 で自動検出
-; 0（自動検出）または 1〜16 を指定
+; 使用する CPU コア数。0 で自動検出（論理コア数）。0 または 1〜64 を指定。
 CPUCoresUsed=0
 
 ; INI ファイルのエディタ設定

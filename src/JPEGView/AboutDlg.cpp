@@ -24,9 +24,9 @@ static LPCTSTR GetSIMDModeString() {
 
 static CString GetReadmeFileName() {
 	// Check if there is a localized version of the readme.html file
-	CString sReadmeFileName = CNLS::GetLocalizedFileName(_T(""), _T("readme"), _T("html"), CSettingsProvider::This().Language());
+	CString sReadmeFileName = CNLS::GetLocalizedFileName(_T("doc\\"), _T("readme"), _T("html"), CSettingsProvider::This().Language());
 	if (::GetFileAttributes(CString(CSettingsProvider::This().GetEXEPath()) + sReadmeFileName) == INVALID_FILE_ATTRIBUTES) {
-		sReadmeFileName = _T("readme.html");
+		sReadmeFileName = _T("doc\\readme.html");
 	}
 	return sReadmeFileName;
 }
