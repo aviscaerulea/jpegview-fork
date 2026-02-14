@@ -39,3 +39,17 @@ ipch/
 
 # VS upgrade log
 UpgradeLog.htm
+
+# Claude Code & Serena
+.claude/
+.serena/
+
+# Release archives
+JPEGView-*.zip
+JPEGView-fork-*.zip
+
+# PDFium binaries
+src/JPEGView/libpdfium/bin64/
+
+# Temporary files
+nul

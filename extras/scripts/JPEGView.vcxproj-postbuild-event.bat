@@ -46,6 +46,10 @@ echo + XCopy Config\* ...
 xcopy "%PROJECT_DIR%Config\*" "%OUT_DIR_FULL_PATH%" /Y /C /D /S
 echo ~ ErrorLevel: %ErrorLevel%
 
+echo + Copy KeyMap.txt.default as KeyMap.txt ...
+copy /Y "%OUT_DIR_FULL_PATH%KeyMap.txt.default" "%OUT_DIR_FULL_PATH%KeyMap.txt"
+echo ~ ErrorLevel: %ErrorLevel%
+
 echo + XCopy LICENSE.txt ...
 xcopy "%PROJECT_DIR%..\..\LICENSE.txt" "%OUT_DIR_FULL_PATH%" /Y /D
 echo ~ ErrorLevel: %ErrorLevel%
