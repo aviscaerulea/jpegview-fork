@@ -29,6 +29,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `86f89af` | CPU コア数検出を論理コア数（ハイパースレッディング含む）に変更: ProcessorMask ビットカウントで論理プロセッサ数を自動検出 |
 | `497fec1` | Release\|x64 ビルド最適化設定統一: WICLoader PDB 無効化、JPEGView 最適化オプション追加（StringPooling, FunctionLevelLinking, IntrinsicFunctions, OptimizeReferences, EnableCOMDATFolding）、pdfium.lib インポートライブラリ生成・配置 |
 | `5a87d08` | mimalloc.lib を git 管理可能ディレクトリに配置: pdfium パターンで mimalloc\lib64 に配置、LibraryPath に追加してクリーンビルド対応 |
+| `90f725c` | Config ディレクトリに language と doc サブディレクトリを導入: strings_*.txt を language/ に、ドキュメントを doc/ に移動、パス参照修正、INI テンプレート CPUCoresUsed コメント更新 |
 
 ### サードパーティライブラリ バージョン比較
 
