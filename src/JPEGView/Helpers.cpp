@@ -286,6 +286,14 @@ int NumCoresPerPhysicalProc(void) {
 	return (logicalProcessors > 0) ? logicalProcessors : 1;
 }
 
+// 最適なスレッド数を取得（論理コア数）
+// HEIF/AVIF デコーダのスレッド並列度に使用
+int GetOptimalThreadCount(void) {
+	// 現在の実装では NumCoresPerPhysicalProc() と同じ（論理コア数を返す）
+	// dav1d/libheif は論理コア数でスケールするように設計されているため、これが最適
+	return NumCoresPerPhysicalProc();
+}
+
 bool PatternMatch(LPCTSTR & sMatchingPattern, LPCTSTR sString, LPCTSTR sPattern) {
 	sMatchingPattern = NULL;
 	if (sString == NULL || sPattern == NULL || *sPattern == 0) return false;

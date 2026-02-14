@@ -6,6 +6,84 @@
 
 #include <fpdfview.h>
 
+// 前方宣言
+static int ReadBlockFromHandle(void* param, unsigned long position,
+	unsigned char* pBuf, unsigned long size);
+
+// PDF ドキュメントキャッシュ（最後の 1 ドキュメントのみ保持）
+class CPdfDocumentCache {
+public:
+	static CPdfDocumentCache& Instance();
+	FPDF_DOCUMENT GetDocument(HANDLE hFile, unsigned long fileSize);
+	void ClearAll();
+
+private:
+	CPdfDocumentCache();
+	~CPdfDocumentCache();
+	static CPdfDocumentCache* sm_instance;
+
+	FPDF_DOCUMENT m_cachedDocument;
+	HANDLE m_cachedHandle;
+	CRITICAL_SECTION m_cs;
+};
+
+CPdfDocumentCache* CPdfDocumentCache::sm_instance = NULL;
+
+CPdfDocumentCache& CPdfDocumentCache::Instance() {
+	if (sm_instance == NULL) {
+		sm_instance = new CPdfDocumentCache();
+	}
+	return *sm_instance;
+}
+
+CPdfDocumentCache::CPdfDocumentCache() {
+	m_cachedDocument = NULL;
+	m_cachedHandle = NULL;
+	::InitializeCriticalSection(&m_cs);
+}
+
+CPdfDocumentCache::~CPdfDocumentCache() {
+	ClearAll();
+	::DeleteCriticalSection(&m_cs);
+}
+
+FPDF_DOCUMENT CPdfDocumentCache::GetDocument(HANDLE hFile, unsigned long fileSize) {
+	::EnterCriticalSection(&m_cs);
+
+	// キャッシュヒットチェック（ハンドルで判定）
+	if (m_cachedDocument != NULL && m_cachedHandle == hFile) {
+		::LeaveCriticalSection(&m_cs);
+		return m_cachedDocument;
+	}
+
+	// キャッシュミス: 既存を破棄して新規ロード
+	if (m_cachedDocument != NULL) {
+		FPDF_CloseDocument(m_cachedDocument);
+		m_cachedDocument = NULL;
+	}
+
+	FPDF_FILEACCESS fileAccess;
+	fileAccess.m_FileLen = fileSize;
+	fileAccess.m_GetBlock = ReadBlockFromHandle;
+	fileAccess.m_Param = hFile;
+
+	m_cachedDocument = FPDF_LoadCustomDocument(&fileAccess, NULL);
+	m_cachedHandle = hFile;
+
+	::LeaveCriticalSection(&m_cs);
+	return m_cachedDocument;
+}
+
+void CPdfDocumentCache::ClearAll() {
+	::EnterCriticalSection(&m_cs);
+	if (m_cachedDocument != NULL) {
+		FPDF_CloseDocument(m_cachedDocument);
+		m_cachedDocument = NULL;
+		m_cachedHandle = NULL;
+	}
+	::LeaveCriticalSection(&m_cs);
+}
+
 // FPDF_FILEACCESS コールバック: HANDLE から指定位置のデータを読み込む
 static int ReadBlockFromHandle(void* param, unsigned long position,
 	unsigned char* pBuf, unsigned long size) {
@@ -54,14 +132,8 @@ void* PdfReader::ReadImage(int& width, int& height, int& bpp,
 		initialized = true;
 	}
 
-	// FPDF_FILEACCESS 構造体初期化（ファイルベース読み込み）
-	FPDF_FILEACCESS fileAccess;
-	fileAccess.m_FileLen = fileSize;
-	fileAccess.m_GetBlock = ReadBlockFromHandle;
-	fileAccess.m_Param = hFile;
-
-	// ドキュメントオープン（オンデマンドでファイルから読み込み）
-	FPDF_DOCUMENT doc = FPDF_LoadCustomDocument(&fileAccess, NULL);  // password = NULL
+	// ドキュメントオープン（キャッシュから取得）
+	FPDF_DOCUMENT doc = CPdfDocumentCache::Instance().GetDocument(hFile, fileSize);
 	if (doc == NULL) {
 		return NULL;
 	}
@@ -69,14 +141,14 @@ void* PdfReader::ReadImage(int& width, int& height, int& bpp,
 	// ページ数取得（表紙のみ対応だが取得はする）
 	int pageCount = FPDF_GetPageCount(doc);
 	if (pageCount < 1) {
-		FPDF_CloseDocument(doc);
+		// キャッシュが管理するためクローズしない
 		return NULL;
 	}
 
 	// ページ 0（表紙）をロード
 	FPDF_PAGE page = FPDF_LoadPage(doc, 0);
 	if (page == NULL) {
-		FPDF_CloseDocument(doc);
+		// キャッシュが管理するためクローズしない
 		return NULL;
 	}
 
@@ -92,13 +164,13 @@ void* PdfReader::ReadImage(int& width, int& height, int& bpp,
 	// ピクセル上限チェック
 	if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
 		FPDF_ClosePage(page);
-		FPDF_CloseDocument(doc);
+		// キャッシュが管理するためクローズしない
 		return NULL;
 	}
 	if (abs((double)width * height) > MAX_IMAGE_PIXELS) {
 		outOfMemory = true;
 		FPDF_ClosePage(page);
-		FPDF_CloseDocument(doc);
+		// キャッシュが管理するためクローズしない
 		return NULL;
 	}
 
@@ -107,7 +179,7 @@ void* PdfReader::ReadImage(int& width, int& height, int& bpp,
 	if (bitmap == NULL) {
 		outOfMemory = true;
 		FPDF_ClosePage(page);
-		FPDF_CloseDocument(doc);
+		// キャッシュが管理するためクローズしない
 		return NULL;
 	}
 
@@ -125,7 +197,7 @@ void* PdfReader::ReadImage(int& width, int& height, int& bpp,
 	if (buffer_ptr == NULL || stride < width * bpp) {
 		FPDFBitmap_Destroy(bitmap);
 		FPDF_ClosePage(page);
-		FPDF_CloseDocument(doc);
+		// キャッシュが管理するためクローズしない
 		return NULL;
 	}
 
@@ -136,7 +208,7 @@ void* PdfReader::ReadImage(int& width, int& height, int& bpp,
 		outOfMemory = true;
 		FPDFBitmap_Destroy(bitmap);
 		FPDF_ClosePage(page);
-		FPDF_CloseDocument(doc);
+		// キャッシュが管理するためクローズしない
 		return NULL;
 	}
 
@@ -148,10 +220,10 @@ void* PdfReader::ReadImage(int& width, int& height, int& bpp,
 		       width * bpp);
 	}
 
-	// リソース解放（即座にドキュメントを閉じる）
+	// リソース解放（ドキュメントはキャッシュが管理）
 	FPDFBitmap_Destroy(bitmap);
 	FPDF_ClosePage(page);
-	FPDF_CloseDocument(doc);
+	// FPDF_CloseDocument(doc); ← キャッシュに残すため削除
 
 	return (void*)pPixelData;
 }

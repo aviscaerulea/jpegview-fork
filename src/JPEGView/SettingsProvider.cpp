@@ -139,7 +139,7 @@ CSettingsProvider::CSettingsProvider(void) {
 	}
 	m_nNumCores = GetInt(_T("CPUCoresUsed"), 0, 0, 64);
 	if (m_nNumCores == 0) {
-		m_nNumCores = Helpers::NumCoresPerPhysicalProc();
+		m_nNumCores = Helpers::GetOptimalThreadCount();
 	}
 
 	CString sDownSampling = GetString(_T("DownSamplingFilter"), _T("BestQuality"));

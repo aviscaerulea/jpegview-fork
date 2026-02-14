@@ -194,6 +194,10 @@ namespace Helpers {
 	// Get number of cores per physical processor, not counting hyperthreading
 	int NumCoresPerPhysicalProc(void);
 
+	// 最適なスレッド数を取得（論理コア数）
+	// HEIF/AVIF デコーダのスレッド並列度に使用
+	int GetOptimalThreadCount(void);
+
 	// Gets the path where JPEGView stores its application data, including a trailing backslash
 	LPCTSTR JPEGViewAppDataPath();
 
