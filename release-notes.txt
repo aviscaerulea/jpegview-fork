@@ -1,17 +1,51 @@
-## v1.3.46.0-20260212.1
+## JPEGView fork v1.3.46.0-20260214.1
 
-### PDF プレビュー機能
+前回リリース v1.3.46.0-20260212.1（2026-02-12）からの更新。
 
-- PDF 表紙（1 ページ目）のプレビュー表示を追加（PDFium ベース）
-- 画面サイズに基づく最適 DPI 計算で高品質表示
-- アンチエイリアシング有効（LCD テキスト最適化）
-- Enter キーで OS 関連付けアプリ（Adobe Reader 等）を起動
-- 画面右下にヒントテキスト表示
-- pdfium.dll は delay-load で DLL 不在時もクラッシュしない
-- pdfium.dll の post-build 自動コピー整備
+### 機能改善
 
-### パフォーマンス最適化（前回リリースから継続）
+- **HEIF デコーダのスレッド並列化**: HEIF 画像デコード時に INI 設定の `CPUCoresUsed` 値を使用してスレッド並列化を行うように改善。libheif の `set_max_decoding_threads` API を使用。
+- **CPU コア数検出の変更**: 物理コア数検出から論理コア数検出（ハイパースレッディング含む）に変更。`ProcessorMask` ビットカウントで論理プロセッサ数を自動検出。
+- **PDF ヒントテキストの視認性向上**: PDF プレビュー時の操作ガイド（「関連付けアプリで開く（Enter）」）のフォントサイズを 2 倍（10pt→20pt）に拡大。
+- **PDF ドキュメントキャッシュ**: 同一 PDF の再表示時にドキュメントの再解析を省略するキャッシュ機構を追加。2 回目以降の表示が高速化。
 
-- スレッド数上限を 16→64 に拡大（ProcessingThreadPool）
-- AVIF デコーダのスレッド数を INI 設定値（CPUCoresUsed）に変更
-- mimalloc メモリアロケータを統合
+### 内部改善
+
+- **Config ディレクトリの構造改善**: `language/` と `doc/` サブディレクトリを導入し、設定ファイルとドキュメントを整理。パス参照を修正し、post-build イベントでサブディレクトリ構造を保持してコピー。
+- **不要な言語別 INI ファイル削除**: `JPEGView_ja.ini` と `JPEGView_ru.ini` を削除。これらのファイルは実際には使用されていなかった。
+- **mimalloc.lib の配置変更**: pdfium パターンに従い、`mimalloc/lib64/` ディレクトリに配置して git 管理可能にし、クリーンビルド時の手動コピーを不要化。
+- **Release|x64 ビルド最適化設定の統一**: WICLoader の PDB 無効化、JPEGView の最適化オプション追加（StringPooling, FunctionLevelLinking, IntrinsicFunctions, OptimizeReferences, EnableCOMDATFolding）。pdfium.lib インポートライブラリの生成・配置を整備。
+- **スレッド数最適化の関数リファクタリング**: `GetOptimalThreadCount()` 関数を導入し、HEIF/AVIF デコーダのスレッド数決定ロジックを一元化。
+- **不要なロシア語キーマップ削除**: `KeyMap.txt.default_ru` を削除。
+
+### ファイル構成の変更
+
+リリース zip の構造が変更されました。`language/` と `doc/` がサブディレクトリとして整理されています：
+
+```
+JPEGView-fork-1.3.46.0-20260214.1_x64/
+├── JPEGView.exe
+├── WICLoader.dll
+├── JPEGView.ini
+├── JPEGView.ini.tpl
+├── KeyMap.txt.default
+├── NavPanel.png
+├── symbols.km
+├── LICENSE.txt
+├── *.dll（delay-load DLL 群）
+├── language/
+│   ├── strings.txt
+│   ├── strings_ja.txt
+│   └── ...（28 言語）
+└── doc/
+    ├── readme.html
+    ├── readme_ru.html
+    ├── readme_uk.html
+    ├── KeyMap-README.html
+    └── KeyMap-README_ru.html
+```
+
+### 注意事項
+
+- Config ディレクトリの構造が変更されたため、旧版から設定ファイルをコピーする場合は新しいディレクトリ構造に合わせて配置してください。
+- CPU コア数検出の変更により、INI 設定の `CPUCoresUsed` が論理コア数（ハイパースレッディング含む）として解釈されます。
