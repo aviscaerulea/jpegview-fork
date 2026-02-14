@@ -174,29 +174,16 @@ if ($SkipBuild) {
     Write-Host "==> ビルド中..." -ForegroundColor Cyan
 
     $buildCmd = @"
-Enable-VSDev; msbuild src/JPEGView/JPEGView.vcxproj /p:Configuration=Release /p:Platform=x64 /t:Rebuild /m:8 /v:minimal /nologo
+Enable-VSDev; msbuild src/JPEGView.sln /p:Configuration=Release /p:Platform=x64 /t:Rebuild /m:8 /v:minimal /nologo
 "@
 
     pwsh -Command $buildCmd
     $buildExitCode = $LASTEXITCODE
 
-    # EXE の存在を確認
-    $exePath = "src/JPEGView/bin/x64/Release/JPEGView.exe"
-    if (-not (Test-Path $exePath)) {
-        Write-Error "ビルドに失敗しました（EXE が生成されていません）"
+    if ($buildExitCode -ne 0) {
+        Write-Error "ビルドに失敗しました（Exit code: $buildExitCode）"
         exit 1
     }
-
-    if ($buildExitCode -ne 0) {
-        Write-Warning "msbuild が警告/エラーを返しましたが、EXE は生成されています（Exit code: $buildExitCode）"
-    }
-
-    # post-build イベントを手動実行（Config ファイルと DLL のコピー）
-    Write-Host "  post-build イベントを実行中..." -ForegroundColor Cyan
-    $postBuildCmd = @"
-cmd /c 'extras\scripts\JPEGView.vcxproj-postbuild-event.bat' '64' 'JPEGView' 'src\JPEGView\' 'src\JPEGView\bin\x64\Release\'
-"@
-    pwsh -Command $postBuildCmd | Out-Null
 
     Write-Host "==> ビルド完了" -ForegroundColor Green
 }

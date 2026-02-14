@@ -59,6 +59,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 サードパーティライブラリの再ビルドが必要な場合は `extras/scripts/build-*.bat` を使用する。NASM、CMake、Python、meson、ninja が必要。
 
+**重要**: ビルドコマンドは**必ずソリューションファイル（`src/JPEGView.sln`）を指定**すること。プロジェクトファイル（`src/JPEGView/JPEGView.vcxproj`）を直接ビルドすると、`$(SolutionDir)` マクロが正しく展開されず、ポストビルドイベントで「指定されたパスが見つかりません」エラーが発生する。
+
+正しいビルドコマンド例:
+```pwsh
+pwsh -Command "Enable-VSDev; msbuild src/JPEGView.sln /p:Configuration=Release /p:Platform=x64 /t:Rebuild /m:8 /v:minimal /nologo"
+```
+
+### タスクランナー（go-task）
+
+`Taskfile.yml` で頻出オペレーションをタスクとして定義している。
+
+```bash
+task clean                                    # ビルド出力と中間ファイルを削除
+task build                                    # Release|x64 リビルド
+task release VERSION=1.3.46.0-20260215.1      # フルリリース（release.ps1 を実行）
+```
+
 ### mimalloc 統合
 
 JPEGView は mimalloc メモリアロケータを使用してメモリ割り当てを最適化している。

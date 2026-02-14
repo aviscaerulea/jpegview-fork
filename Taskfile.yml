@@ -1,0 +1,28 @@
+version: '3'
+
+vars:
+  SLN: src/JPEGView.sln
+  CONFIG: Release
+  PLATFORM: x64
+  OUT_DIR: src/JPEGView/bin/x64/Release
+
+tasks:
+  clean:
+    desc: ビルド出力と中間ファイルを削除
+    cmds:
+      - pwsh -Command "Remove-Item -Recurse -Force src/JPEGView/bin -ErrorAction SilentlyContinue"
+      - pwsh -Command "Remove-Item -Recurse -Force src/JPEGView/obj -ErrorAction SilentlyContinue"
+      - pwsh -Command "Remove-Item -Recurse -Force src/WICLoader/obj -ErrorAction SilentlyContinue"
+
+  build:
+    desc: Release|x64 ビルド
+    cmds:
+      - 'pwsh -Command "Enable-VSDev; msbuild {{.SLN}} /p:Configuration={{.CONFIG}} /p:Platform={{.PLATFORM}} /t:Rebuild /m:8 /v:minimal /nologo"'
+
+  release:
+    desc: "リリース（VERSION 必須。例: task release VERSION=1.3.46.0-20260215.1）"
+    requires:
+      vars:
+        - VERSION
+    cmds:
+      - pwsh -File release.ps1 -Version "{{.VERSION}}"
