@@ -100,3 +100,4 @@ void * HeifReader::ReadImage(int &width,
 
 	return (void*)pPixelData;
 }
+
