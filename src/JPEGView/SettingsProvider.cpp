@@ -85,7 +85,7 @@ CSettingsProvider::CSettingsProvider(void) {
 	m_pGlobalKeys = NULL;
 	m_pUserKeys = NULL;
 	m_sIniNameUser = m_sIniNameGlobal;
-	m_bStoreToEXEPath = GetBool(_T("StoreToEXEPath"), false);
+	m_bStoreToEXEPath = GetBool(_T("StoreToEXEPath"), true);
 
 	if (!m_bStoreToEXEPath) {
 		// User INI file
