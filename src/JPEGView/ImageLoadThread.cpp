@@ -18,6 +18,7 @@
 #include "AVIFWrapper.h"
 #include "RAWWrapper.h"
 #include "PDFWrapper.h"
+#include "SVGWrapper.h"
 #endif
 #include "WEBPWrapper.h"
 #include "QOIWrapper.h"
@@ -379,6 +380,14 @@ void CImageLoadThread::ProcessRequest(CRequestBase& request) {
 			DeleteCachedJxlDecoder();
 			DeleteCachedAvifDecoder();
 			ProcessReadPDFRequest(&rq);
+			break;
+		case IF_SVG:
+			DeleteCachedGDIBitmap();
+			DeleteCachedWebpDecoder();
+			DeleteCachedPngDecoder();
+			DeleteCachedJxlDecoder();
+			DeleteCachedAvifDecoder();
+			ProcessReadSVGRequest(&rq);
 			break;
 #endif
 		case IF_QOI:
@@ -1123,6 +1132,48 @@ void CImageLoadThread::ProcessReadPDFRequest(CRequest* request) {
 				request->Image = new CJPEGImage(
 					nWidth, nHeight, pPixelData, NULL, nBPP, 0,
 					IF_PDF, false, 0, 1, 0);
+			}
+		}
+	} catch (...) {
+		delete request->Image;
+		request->Image = NULL;
+		request->ExceptionError = true;
+	}
+	SetErrorMode(nPrevErrorMode);
+	::CloseHandle(hFile);
+}
+
+void CImageLoadThread::ProcessReadSVGRequest(CRequest* request) {
+	HANDLE hFile = ::CreateFile(request->FileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+	if (hFile == INVALID_HANDLE_VALUE) return;
+
+	UINT nPrevErrorMode = SetErrorMode(SEM_FAILCRITICALERRORS);
+	try {
+		long long nFileSize = Helpers::GetFileSize(hFile);
+		if (nFileSize > MAX_SVG_FILE_SIZE) {
+			request->OutOfMemory = true;
+		} else {
+			// ファイル全体をメモリに読み込む
+			unsigned char* fileBuffer = new unsigned char[(size_t)nFileSize];
+			DWORD bytesRead = 0;
+			if (!::ReadFile(hFile, fileBuffer, (DWORD)nFileSize, &bytesRead, NULL) || bytesRead != nFileSize) {
+				delete[] fileBuffer;
+				::CloseHandle(hFile);
+				SetErrorMode(nPrevErrorMode);
+				return;
+			}
+
+			int nWidth, nHeight, nBPP;
+			uint8* pPixelData = (uint8*)SvgReader::ReadImage(
+				nWidth, nHeight, nBPP,
+				request->OutOfMemory, fileBuffer, (int)nFileSize);
+			delete[] fileBuffer;
+
+			if (pPixelData != NULL) {
+				// frame_index=0, frame_count=1
+				request->Image = new CJPEGImage(
+					nWidth, nHeight, pPixelData, NULL, nBPP, 0,
+					IF_SVG, false, 0, 1, 0);
 			}
 		}
 	} catch (...) {

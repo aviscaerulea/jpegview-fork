@@ -274,7 +274,7 @@
       <CompileAs>CompileAsCpp</CompileAs>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
-      <AdditionalIncludeDirectories>libpdfium\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>lunasvg\include;libpdfium\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -282,8 +282,8 @@
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>pdfium.lib;mimalloc.lib;legacy_stdio_definitions.lib;legacy_stdio_wide_specifiers.lib;gdiplus.lib;WICLoader.lib;turbojpeg-static.lib;libpng16.lib;zlib.lib;jxl_dec.lib;jxl_threads.lib;heif.lib;libwebp.lib;libwebpdemux.lib;avif.lib;lcms2.lib;libraw.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>bin\x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>plutovg.lib;lunasvg.lib;pdfium.lib;mimalloc.lib;legacy_stdio_definitions.lib;legacy_stdio_wide_specifiers.lib;gdiplus.lib;WICLoader.lib;turbojpeg-static.lib;libpng16.lib;zlib.lib;jxl_dec.lib;jxl_threads.lib;heif.lib;libwebp.lib;libwebpdemux.lib;avif.lib;lcms2.lib;libraw.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>lunasvg\lib64;bin\x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
@@ -319,6 +319,7 @@
     <ClCompile Include="HashCompareLPCTSTR.cpp" />
     <ClCompile Include="HEIFWrapper.cpp" />
     <ClCompile Include="PDFWrapper.cpp" />
+    <ClCompile Include="SVGWrapper.cpp" />
     <ClCompile Include="HelpDlg.cpp" />
     <ClCompile Include="Helpers.cpp" />
     <ClCompile Include="HelpersGUI.cpp" />
@@ -411,6 +412,7 @@
     <ClInclude Include="HashCompareLPCTSTR.h" />
     <ClInclude Include="HEIFWrapper.h" />
     <ClInclude Include="PDFWrapper.h" />
+    <ClInclude Include="SVGWrapper.h" />
     <ClInclude Include="HelpDlg.h" />
     <ClInclude Include="Helpers.h" />
     <ClInclude Include="HelpersGUI.h" />

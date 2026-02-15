@@ -50,6 +50,12 @@ const unsigned int MAX_PDF_FILE_SIZE = 1024 * 1024 * 100;
 const unsigned int MAX_PDF_FILE_SIZE = 1024 * 1024 * 50;
 #endif
 
+#ifdef _WIN64
+const unsigned int MAX_SVG_FILE_SIZE = 1024 * 1024 * 50;
+#else
+const unsigned int MAX_SVG_FILE_SIZE = 1024 * 1024 * 20;
+#endif
+
 // this may be an artificial limitation and might make configurable, or ignore custom setting only for win32
 #ifdef _WIN64
 const unsigned int MAX_IMAGE_PIXELS = 65535 * 65535;

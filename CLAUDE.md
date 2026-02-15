@@ -30,6 +30,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `497fec1` | Release\|x64 ビルド最適化設定統一: WICLoader PDB 無効化、JPEGView 最適化オプション追加（StringPooling, FunctionLevelLinking, IntrinsicFunctions, OptimizeReferences, EnableCOMDATFolding）、pdfium.lib インポートライブラリ生成・配置 |
 | `5a87d08` | mimalloc.lib を git 管理可能ディレクトリに配置: pdfium パターンで mimalloc\lib64 に配置、LibraryPath に追加してクリーンビルド対応 |
 | `90f725c` | Config ディレクトリに language と doc サブディレクトリを導入: strings_*.txt を language/ に、ドキュメントを doc/ に移動、パス参照修正、INI テンプレート CPUCoresUsed コメント更新 |
+| `` | SVG/SVGZ サポート追加（lunasvg ベース）: 画面サイズに合わせた高品質レンダリング、gzip 展開対応、日本語フォント自動埋め込み、最大 50MB（x64）/20MB（x86）のファイルサイズ制限 |
 
 ### サードパーティライブラリ バージョン比較
 
@@ -47,6 +48,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | **LibRaw** | 0.21.1 | **0.22.0** | DNG 1.7 対応追加 |
 | **lcms2** | 2.15 | **2.18** | セキュリティ修正含む |
 | **PDFium** | - | **（プリビルト）** | Chromium プロジェクトの PDF レンダリングライブラリ |
+| **lunasvg** | - | **（静的リンク）** | SVG レンダリングライブラリ（plutovg + zlib） |
 
 ## ビルド
 
@@ -169,6 +171,7 @@ JPEGView は mimalloc メモリアロケータを使用してメモリ割り当�
 | AVIFWrapper | libavif + dav1d | AVIF | Yes |
 | RAWWrapper | LibRaw | Camera RAW | Yes |
 | PdfReader | PDFium | PDF（表紙のみ） | Yes |
+| SvgReader | lunasvg + zlib | SVG, SVGZ | No（静的リンク） |
 | PsdReader | 独自実装 | PSD/PSB | No |
 | ReaderBMP/TGA | 独自実装 | BMP, TGA | No |
 

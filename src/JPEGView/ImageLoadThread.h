@@ -119,6 +119,7 @@ private:
 	void ProcessReadPSDRequest(CRequest * request);
 	void ProcessReadRAWRequest(CRequest * request);
 	void ProcessReadPDFRequest(CRequest * request);
+	void ProcessReadSVGRequest(CRequest * request);
 	void ProcessReadGDIPlusRequest(CRequest * request);
 	void ProcessReadWICRequest(CRequest* request);
 
