@@ -1,54 +1,31 @@
-# v1.3.46.0-20260214.1
+# v1.3.46.0-20260215.1
 
-前回リリース（v1.3.46.0-20260212.1）から 19 コミットの変更を含むリリースです。
+## 概要
 
-## 主な変更内容
-
-パフォーマンス最適化、UI 改善、設定ファイル構造の整理、開発環境の改善を実施しました。
+VC++ 再頒布パッケージ未インストール環境での互換性を改善し、リポジトリ名称を JPEGView-nt に変更したリリース。
 
 ## 新機能
 
-- **HEIF デコーダのスレッド並列化**: libheif の `set_max_decoding_threads` API により、INI 設定の `CPUCoresUsed` に基づいてスレッド数を制御
-- **PDF ドキュメントキャッシュ**: シングルドキュメント HANDLE ベースキャッシュにより、同一 PDF の 2 回目以降の表示を高速化（50-200ms 削減）
-- **PDF プレビュー時のヒント表示**: 画面右下に Enter キー操作ガイドを表示（ローカライズ対応）
+- **MSVC ランタイム DLL の同梱**
+  - プリビルト DLL（PDFium 等）が必要とする MSVC ランタイム DLL（msvcp140.dll、vcruntime140.dll、vcruntime140_1.dll）を配布パッケージに同梱
+  - VC++ 再頒布パッケージが未インストールの環境でも JPEG XL、HEIF、AVIF、RAW、PDF 形式を正常に読み込めるように改善
 
-## パフォーマンス最適化
+## 改善
 
-- **CPU コア数検出の改善**: 論理コア数（ハイパースレッディング含む）を自動検出するように変更（ProcessorMask ビットカウント）
-- **スレッド数最適化の関数化**: `GetOptimalThreadCount()` ラッパー関数を導入し、将来の調整を容易に
-- **Release|x64 ビルド最適化**: StringPooling、FunctionLevelLinking、IntrinsicFunctions、OptimizeReferences、EnableCOMDATFolding を統一設定
+- **リポジトリ・アプリ名称変更**
+  - JPEGView-fork から JPEGView-nt に名称変更
+  - タイトルバーに "JPEGView-nt" を表示
+  - About ダイアログの URL を更新
+- **リリース自動化スクリプトの追加**
+  - release.ps1 による一貫したリリースフローの自動化
+  - Taskfile.yml にビルド・リリースタスクを追加
+- **INI 設定のデフォルト値変更**
+  - `IniEditor` のデフォルト値を `system` に変更（Windows 既定のテキストエディタで開く）
+  - `NavigateWithMouseWheel` のデフォルト値を `true` に変更（マウスホイールでの画像切り替えを有効化）
 
-## UI 改善
+## 修正
 
-- **タイトルバー名変更**: "JPEGView-fork (nt)" に変更し、フォーク版であることを明示
-- **PDF ヒントテキスト拡大**: フォントサイズを 2 倍（Arial 20pt Bold）に拡大し、視認性を向上
-
-## 設定変更
-
-- **Config ディレクトリ構造の整理**: language と doc サブディレクトリを導入し、設定ファイルを整理
-- **INI デフォルト値の変更**:
-  - `SkipFileOpenDialogOnStartup`: false → true（起動時のダイアログを省略）
-  - `DefaultWindowRect`: image → auto（ウィンドウサイズを画面の 2/3 に自動調整）
-- **不要ファイルの削除**: 言語別 INI ファイル（JPEGView_ja, JPEGView_ru）、KeyMap.txt.default_ru を削除
-
-## 開発環境改善
-
-- **リリース自動化スクリプト**: release.ps1 でバージョン更新からリリースまでを一貫して自動化
-- **タスクランナー追加**: Taskfile.yml で clean/build/release タスクを定義
-- **ビルド自動化改善**: ポストビルドイベントにデバッグ出力を追加し、トラブルシューティングを容易に
-- **mimalloc.lib 配置改善**: git 管理可能ディレクトリに配置し、クリーンビルド対応
-
-## その他
-
-- **リポジトリ・アプリ名称変更**: JPEGView-fork → JPEGView-nt に統一
-- **リリースノートの更新**: 最新の変更内容を反映
-
-## ダウンロード
-
-- **Windows x64**: JPEGView-nt-1.3.46.0-20260214.1_x64.zip (7.24 MB)
-
----
-
-## フィードバック・不具合報告
-
-不具合や改善要望は [Issues](https://github.com/aviscaerulea/jpegview-fork/issues) までお願いします。
+- zip 入れ子問題の修正（配布 zip 内に不要な入れ子ディレクトリが作成される問題を解消）
+- README の更新（リポジトリ名称変更に伴う修正）
+- .gitignore にビルド成果物を追加
+- HEIFWrapper.cpp のフォーマット修正（ファイル末尾改行）
