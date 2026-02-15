@@ -73,6 +73,7 @@ call :COPY_DLLS libavif
 call :COPY_DLLS lcms2
 call :COPY_DLLS libraw
 call :COPY_DLLS libpdfium
+call :COPY_DLLS msvcrt
 
 
 exit /b 0

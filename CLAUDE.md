@@ -46,7 +46,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | **dav1d** | 1.5.1 | **1.5.3** | 小更新 |
 | **LibRaw** | 0.21.1 | **0.22.0** | DNG 1.7 対応追加 |
 | **lcms2** | 2.15 | **2.18** | セキュリティ修正含む |
-| **PDFium** | - | **（プリビルト）** | Chromium プロジェクトの PDF レンダリングライブラリ。MSVC ランタイム不要 |
+| **PDFium** | - | **（プリビルト）** | Chromium プロジェクトの PDF レンダリングライブラリ |
 
 ## ビルド
 
