@@ -73,6 +73,18 @@ struct PngReader::png_cache {
 
 PngReader::png_cache PngReader::cache = { 0 };
 
+// PNG decoder static cache lock (RAII pattern)
+class CPngLock {
+public:
+	CPngLock() { ::InitializeCriticalSection(&m_cs); }
+	~CPngLock() { ::DeleteCriticalSection(&m_cs); }
+	void Lock() { ::EnterCriticalSection(&m_cs); }
+	void Unlock() { ::LeaveCriticalSection(&m_cs); }
+private:
+	CRITICAL_SECTION m_cs;
+};
+static CPngLock s_pngLock;
+
 #ifdef PNG_APNG_SUPPORTED
 void BlendOver(unsigned char** rows_dst, unsigned char** rows_src, unsigned int x, unsigned int y, unsigned int w, unsigned int h)
 {
@@ -301,13 +313,20 @@ void* PngReader::ReadImage(int& width,
 	void* buffer,
 	size_t sizebytes)
 {
+	// Lock PNG decoder (thread safety)
+	s_pngLock.Lock();
+
 	exif_chunk = NULL;
 	if (!cache.buffer) {
-		if (sizebytes < 8)
+		if (sizebytes < 8) {
+			s_pngLock.Unlock();
 			return NULL;
+		}
 		cache.buffer = malloc(sizebytes-8);
-		if (!cache.buffer)
+		if (!cache.buffer) {
+			s_pngLock.Unlock();
 			return NULL;
+		}
 		// copy everything except the PNG signature (first 8 bytes)
 		memcpy(cache.buffer, (char*)buffer+8, sizebytes-8);
 		cache.buffer_size = sizebytes-8;
@@ -317,6 +336,7 @@ void* PngReader::ReadImage(int& width,
 	if (!cache.png_ptr || cache.frame_index == 0) {
 		DeleteCacheInternal(false);
 		if (!buffer || !BeginReading(buffer, sizebytes, outOfMemory)) {
+			s_pngLock.Unlock();
 			return NULL;
 		}
 
@@ -352,6 +372,8 @@ void* PngReader::ReadImage(int& width,
 	}
 	if (!has_animation)
 		DeleteCache();
+
+	s_pngLock.Unlock();
 	return pixels;
 }
 
@@ -376,7 +398,9 @@ void PngReader::DeleteCacheInternal(bool free_buffer)
 }
 
 void PngReader::DeleteCache() {
+	s_pngLock.Lock();
 	DeleteCacheInternal(true);
+	s_pngLock.Unlock();
 }
 
 bool PngReader::MustUseLibpng(const void* bufferIn, size_t sizebytes) {

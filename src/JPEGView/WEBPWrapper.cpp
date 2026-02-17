@@ -19,6 +19,18 @@ struct WebpReaderWriter::webp_cache {
 
 WebpReaderWriter::webp_cache WebpReaderWriter::cache = { 0 };
 
+// WebP decoder static cache lock (RAII pattern)
+class CWebpLock {
+public:
+	CWebpLock() { ::InitializeCriticalSection(&m_cs); }
+	~CWebpLock() { ::DeleteCriticalSection(&m_cs); }
+	void Lock() { ::EnterCriticalSection(&m_cs); }
+	void Unlock() { ::LeaveCriticalSection(&m_cs); }
+private:
+	CRITICAL_SECTION m_cs;
+};
+static CWebpLock s_webpLock;
+
 void* WebpReaderWriter::ReadImage(int& width,
 	int& height,
 	int& nchannels,
@@ -30,6 +42,9 @@ void* WebpReaderWriter::ReadImage(int& width,
 	const void* buffer,
 	int sizebytes)
 {
+	// Lock WebP decoder (thread safety)
+	s_webpLock.Lock();
+
 	uint8* pPixelData = NULL;
 	WebPBitstreamFeatures features;
 	width = height = 0;
@@ -38,14 +53,21 @@ void* WebpReaderWriter::ReadImage(int& width,
 	exif_chunk = NULL;
 
 	if (!cache.decoder || !cache.data.bytes) {
-		if (!WebPGetInfo((const uint8_t*)buffer, sizebytes, &width, &height))
+		if (!WebPGetInfo((const uint8_t*)buffer, sizebytes, &width, &height)) {
+			s_webpLock.Unlock();
 			return NULL;
-		if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION)
+		}
+		if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
+			s_webpLock.Unlock();
 			return NULL;
-		if (WebPGetFeatures((const uint8_t*)buffer, sizebytes, &features) != VP8_STATUS_OK)
+		}
+		if (WebPGetFeatures((const uint8_t*)buffer, sizebytes, &features) != VP8_STATUS_OK) {
+			s_webpLock.Unlock();
 			return NULL;
+		}
 		if ((double)width * height > MAX_IMAGE_PIXELS) {
 			outOfMemory = true;
+			s_webpLock.Unlock();
 			return NULL;
 		}
 
@@ -81,6 +103,7 @@ void* WebpReaderWriter::ReadImage(int& width,
 			pPixelData = new(std::nothrow) unsigned char[size];
 			if (pPixelData == NULL) {
 				outOfMemory = true;
+				s_webpLock.Unlock();
 				return NULL;
 			}
 			WebPDecodeBGRAInto((const uint8_t*)buffer, sizebytes, pPixelData, size, nStride);
@@ -89,6 +112,7 @@ void* WebpReaderWriter::ReadImage(int& width,
 			ICCProfileTransform::DoTransform(transform, pPixelData, pPixelData, width, height);
 			ICCProfileTransform::DeleteTransform(transform);
 
+			s_webpLock.Unlock();
 			return pPixelData;
 		}
 	
@@ -111,16 +135,20 @@ void* WebpReaderWriter::ReadImage(int& width,
 	width = cache.width;
 	height = cache.height;
 
-	if (decoder == NULL)
+	if (decoder == NULL) {
+		s_webpLock.Unlock();
 		return NULL;
+	}
 
 	// Decode frame
 	int timestamp;
 	uint8_t* buf;
 	if (!WebPAnimDecoderHasMoreFrames(decoder))
 		WebPAnimDecoderReset(decoder);
-	if (!WebPAnimDecoderGetNext(decoder, &buf, &timestamp))
+	if (!WebPAnimDecoderGetNext(decoder, &buf, &timestamp)) {
+		s_webpLock.Unlock();
 		return NULL;
+	}
 
 	// Set frametime and frame count
 	WebPAnimInfo anim_info;
@@ -135,6 +163,7 @@ void* WebpReaderWriter::ReadImage(int& width,
 	pPixelData = new(std::nothrow) unsigned char[width * height * nchannels];
 	if (pPixelData == NULL) {
 		outOfMemory = true;
+		s_webpLock.Unlock();
 		return NULL;
 	}
 
@@ -144,15 +173,18 @@ void* WebpReaderWriter::ReadImage(int& width,
 		memcpy(pPixelData, buf, width * height * nchannels);
 	}
 
+	s_webpLock.Unlock();
 	return pPixelData;
 
 }
 
 void WebpReaderWriter::DeleteCache() {
+	s_webpLock.Lock();
 	WebPAnimDecoderDelete(cache.decoder);
 	WebPDataClear(&cache.data);
 	ICCProfileTransform::DeleteTransform(cache.transform);
 	cache = { 0 };
+	s_webpLock.Unlock();
 }
 
 void* WebpReaderWriter::Compress(const void* source,

@@ -17,6 +17,18 @@ struct AvifReader::avif_cache {
 
 AvifReader::avif_cache AvifReader::cache = { 0 };
 
+// AVIF decoder static cache lock (RAII pattern)
+class CAvifLock {
+public:
+	CAvifLock() { ::InitializeCriticalSection(&m_cs); }
+	~CAvifLock() { ::DeleteCriticalSection(&m_cs); }
+	void Lock() { ::EnterCriticalSection(&m_cs); }
+	void Unlock() { ::LeaveCriticalSection(&m_cs); }
+private:
+	CRITICAL_SECTION m_cs;
+};
+static CAvifLock s_avifLock;
+
 void* AvifReader::ReadImage(int& width,
 	int& height,
 	int& nchannels,
@@ -29,6 +41,9 @@ void* AvifReader::ReadImage(int& width,
 	const void* buffer,
 	int sizebytes)
 {
+	// Lock AVIF decoder (thread safety)
+	s_avifLock.Lock();
+
 	outOfMemory = false;
 	width = height = 0;
 	nchannels = 4;
@@ -43,6 +58,7 @@ void* AvifReader::ReadImage(int& width,
 		cache.data = (uint8_t*)malloc(sizebytes);
 		if (cache.data == NULL) {
 			outOfMemory = true;
+			s_avifLock.Unlock();
 			return NULL;
 		}
 		memcpy(cache.data, buffer, sizebytes);
@@ -52,11 +68,13 @@ void* AvifReader::ReadImage(int& width,
 		result = avifDecoderSetIOMemory(cache.decoder, cache.data, sizebytes);
 		if (result != AVIF_RESULT_OK) {
 			DeleteCache();
+			s_avifLock.Unlock();
 			return NULL;
 		}
 		result = avifDecoderParse(cache.decoder);
 		if (result != AVIF_RESULT_OK) {
 			DeleteCache();
+			s_avifLock.Unlock();
 			return NULL;
 		}
 		cache.rgb = { 0 };
@@ -68,6 +86,7 @@ void* AvifReader::ReadImage(int& width,
 	result = avifDecoderNthImage(cache.decoder, frame_index);
 	if (result != AVIF_RESULT_OK) {
 		DeleteCache();
+		s_avifLock.Unlock();
 		return NULL;
 	}
 	avifRGBImageSetDefaults(&cache.rgb, cache.decoder->image);
@@ -85,6 +104,7 @@ void* AvifReader::ReadImage(int& width,
 	cache.rgb.pixels = new(std::nothrow) unsigned char[size];
 	if (cache.rgb.pixels == NULL) {
 		outOfMemory = true;
+		s_avifLock.Unlock();
 		return NULL;
 	}
 	cache.rgb.rowBytes = width * nchannels;
@@ -92,6 +112,7 @@ void* AvifReader::ReadImage(int& width,
 	if (result != AVIF_RESULT_OK) {
 		delete[] cache.rgb.pixels;
 		DeleteCache();
+		s_avifLock.Unlock();
 		return NULL;
 	}
 
@@ -153,13 +174,16 @@ void* AvifReader::ReadImage(int& width,
 	if (!has_animation)
 		DeleteCache();
 
+	s_avifLock.Unlock();
 	return pPixelData;
 }
 
 void AvifReader::DeleteCache() {
+	s_avifLock.Lock();
 	if (cache.decoder)
 		avifDecoderDestroy(cache.decoder);
 	free(cache.data);
 	ICCProfileTransform::DeleteTransform(cache.transform);
 	cache = { 0 };
+	s_avifLock.Unlock();
 }
