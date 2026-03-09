@@ -56,3 +56,9 @@ src/JPEGView/libpdfium/bin64/
 # Temporary files
 nul
 release-notes.txt
+
+# Additional excludes
+**/.env
+**/*.local.*
+.task/
+.clasp.json

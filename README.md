@@ -124,6 +124,13 @@ scoop install extras/jpegview-fork
 
 After installation, the configuration file is located at `%UserProfile%\scoop\persist\JPEGView-fork\JPEGView.ini`.
 
+### JPEGView-nt (this fork)
+
+```shell
+scoop bucket add aviscaerulea https://github.com/aviscaerulea/scoop-bucket
+scoop install jpegview-nt
+```
+
 ## System Requirements
 
 * 64-bit version: Windows 7/8/10/11 64-bit or later
