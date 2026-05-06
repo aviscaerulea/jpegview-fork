@@ -84,27 +84,32 @@ bool CProcessingThreadPool::Process(CProcessingRequest* pRequest) {
 			// Important: All slices must have a height dividable by 'StripPadding', except the last one
 			int nNumThreadsUsed = m_nNumThreads + 1; // we also use the calling thread, thus +1
 			int nSliceCY;
-			while ((nSliceCY = ~(pRequest->StripPadding - 1) & (nTargetCY / nNumThreadsUsed)) < pRequest->StripPadding) {
+			while (nNumThreadsUsed > 1 && (nSliceCY = ~(pRequest->StripPadding - 1) & (nTargetCY / nNumThreadsUsed)) < pRequest->StripPadding) {
 				nNumThreadsUsed--;
 			}
-			int nLastCY = nTargetCY - (nNumThreadsUsed - 1)*nSliceCY;
-			volatile LONG nRequestThreadCounter = nNumThreadsUsed - 1;
-			int nCurrCY = 0;
-			HANDLE eventFinished = ::CreateEvent(0, TRUE, FALSE, NULL);
-			CWrappedRequest** pAllWrappedRequests = new CWrappedRequest*[nNumThreadsUsed-1];
-			for (int i = 0; i < nNumThreadsUsed-1; i++) {
-				pAllWrappedRequests[i] = new CWrappedRequest(pRequest, nCurrCY, nSliceCY, eventFinished);
-				pAllWrappedRequests[i]->EventFinishedCounter = &nRequestThreadCounter;
-				m_threads[i]->StartProcess(pAllWrappedRequests[i]);
-				nCurrCY += nSliceCY;
+			// nNumThreadsUsed が 1 に減少した場合はワーカースレッド不要、呼び出しスレッドのみで処理
+			if (nNumThreadsUsed <= 1) {
+				CProcessingThread::DoProcess(pRequest, 0, nTargetCY);
+			} else {
+				int nLastCY = nTargetCY - (nNumThreadsUsed - 1)*nSliceCY;
+				volatile LONG nRequestThreadCounter = nNumThreadsUsed - 1;
+				int nCurrCY = 0;
+				HANDLE eventFinished = ::CreateEvent(0, TRUE, FALSE, NULL);
+				CWrappedRequest** pAllWrappedRequests = new CWrappedRequest*[nNumThreadsUsed-1];
+				for (int i = 0; i < nNumThreadsUsed-1; i++) {
+					pAllWrappedRequests[i] = new CWrappedRequest(pRequest, nCurrCY, nSliceCY, eventFinished);
+					pAllWrappedRequests[i]->EventFinishedCounter = &nRequestThreadCounter;
+					m_threads[i]->StartProcess(pAllWrappedRequests[i]);
+					nCurrCY += nSliceCY;
+				}
+				CProcessingThread::DoProcess(pRequest, nCurrCY, nLastCY);
+				::WaitForSingleObject(eventFinished, INFINITE);
+				::CloseHandle(eventFinished);
+				for (int i = 0; i < nNumThreadsUsed-1; i++) {
+					pAllWrappedRequests[i]->Deleted = true; // thread pool threads will remove the requests from the queue
+				}
+				delete [] pAllWrappedRequests;
 			}
-			CProcessingThread::DoProcess(pRequest, nCurrCY, nLastCY);
-			::WaitForSingleObject(eventFinished, INFINITE);
-			::CloseHandle(eventFinished);
-			for (int i = 0; i < nNumThreadsUsed-1; i++) {
-				pAllWrappedRequests[i]->Deleted = true; // thread pool threads will remove the requests from the queue
-			}
-			delete [] pAllWrappedRequests;
 		}
 	}
 	return pRequest->Success;
@@ -149,6 +154,12 @@ void CProcessingThread::DoProcess(CProcessingRequest* pRequest, int nOffsetY, in
 
 void CProcessingThread::ProcessRequest(CRequestBase& request) {
 	CWrappedRequest* pWrappedRequest = (CWrappedRequest*)&request;
-	DoProcess(pWrappedRequest->InnerRequest, pWrappedRequest->Offset, pWrappedRequest->SizeY);
+	try {
+		DoProcess(pWrappedRequest->InnerRequest, pWrappedRequest->Offset, pWrappedRequest->SizeY);
+	}
+	catch (...) {
+		// 例外発生時は処理失敗として記録。EventFinished のシグナルは基底クラスが担保
+		pWrappedRequest->InnerRequest->Success = false;
+	}
 }
 
