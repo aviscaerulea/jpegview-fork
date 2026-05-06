@@ -31,6 +31,8 @@ jobs:
 
       - name: Build
         shell: cmd
+        env:
+          MSBUILD_TARGET: "JPEGView:Rebuild;WICLoader:Rebuild"
         run: build.bat src\JPEGView.sln Release x64
 
       - name: Create zip
