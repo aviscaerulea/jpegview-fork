@@ -3,24 +3,20 @@
     JPEGView-nt リリース自動化スクリプト
 
 .DESCRIPTION
-    バージョン文字列を引数として渡すだけで、ソース更新からリリースまでを一貫して自動化する。
+    バージョン文字列を引数として渡すだけで、ソース更新から GitHub リリース作成までを
+    一貫して自動化する。ビルド・zip 作成は GitHub Actions が担う。
 
     処理フロー:
     1. バリデーション（バージョン形式、未コミット、必要ツール）
     2. ソース更新（resource.h, JPEGView.rc）
     3. git commit
-    4. msbuild（Release|x64 リビルド）
-    5. zip 作成
-    6. git tag + push + GitHub release 作成
+    4. git tag + push + GitHub release 作成（zip は GHA が後付けでアップロード）
 
 .PARAMETER Version
     バージョン文字列（例: 1.3.46.0-20260215.1）
 
 .PARAMETER DryRun
     変更内容を表示するだけで実行しない
-
-.PARAMETER SkipBuild
-    ビルド済みの場合にビルドをスキップ
 
 .PARAMETER SkipRelease
     GitHub リリース作成をスキップ（ローカルまで）
@@ -42,9 +38,6 @@ param(
 
     [Parameter(Mandatory = $false)]
     [switch]$DryRun,
-
-    [Parameter(Mandatory = $false)]
-    [switch]$SkipBuild,
 
     [Parameter(Mandatory = $false)]
     [switch]$SkipRelease
@@ -80,8 +73,6 @@ foreach ($tool in $tools) {
     }
 }
 
-# msbuild は Enable-VSDev 後に使用可能になるため、ここではチェックしない
-
 Write-Host "==> バリデーション完了" -ForegroundColor Green
 
 # =============================================================================
@@ -108,7 +99,8 @@ if ($DryRun) {
         $newLine = $Matches[0]
         Write-Host "  + $newLine" -ForegroundColor Green
     }
-} else {
+}
+else {
     Set-Content $resourceH -Value $resourceHContent -Encoding UTF8 -NoNewline
     Write-Host "  $resourceH 更新完了" -ForegroundColor Green
 }
@@ -141,7 +133,8 @@ if ($DryRun) {
         $newProductVersion = $Matches[0]
         Write-Host "  + $newProductVersion" -ForegroundColor Green
     }
-} else {
+}
+else {
     Set-Content $jpegviewRc -Value $rcContent -Encoding UTF8 -NoNewline
     Write-Host "  $jpegviewRc 更新完了" -ForegroundColor Green
 }
@@ -161,75 +154,12 @@ Write-Host "==> git commit 中..." -ForegroundColor Cyan
 
 git add $resourceH $jpegviewRc
 git commit -m "バージョン更新: v$Version"
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "git commit に失敗しました（Exit code: $LASTEXITCODE）"
+    exit 1
+}
 
 Write-Host "==> git commit 完了" -ForegroundColor Green
-
-# =============================================================================
-# ビルド
-# =============================================================================
-
-if ($SkipBuild) {
-    Write-Host "==> ビルドスキップ（-SkipBuild 指定）" -ForegroundColor Yellow
-} else {
-    Write-Host "==> ビルド中..." -ForegroundColor Cyan
-
-    $buildCmd = @"
-Enable-VSDev; msbuild src/JPEGView.sln /p:Configuration=Release /p:Platform=x64 /t:Rebuild /m:8 /v:minimal /nologo
-"@
-
-    pwsh -Command $buildCmd
-    $buildExitCode = $LASTEXITCODE
-
-    if ($buildExitCode -ne 0) {
-        Write-Error "ビルドに失敗しました（Exit code: $buildExitCode）"
-        exit 1
-    }
-
-    Write-Host "==> ビルド完了" -ForegroundColor Green
-}
-
-# =============================================================================
-# zip 作成
-# =============================================================================
-
-Write-Host "==> zip 作成中..." -ForegroundColor Cyan
-
-$tempDir = Join-Path $env:TEMP "JPEGView-nt-${Version}_x64"
-if (Test-Path $tempDir) {
-    Remove-Item $tempDir -Recurse -Force
-}
-New-Item -ItemType Directory -Path $tempDir | Out-Null
-
-$srcDir = 'src/JPEGView/bin/x64/Release'
-$items = @(
-    '*.exe',
-    '*.dll',
-    '*.ini',
-    '*.ini.tpl',
-    'KeyMap.txt.default',
-    'NavPanel.png',
-    'symbols.km',
-    'LICENSE.txt'
-)
-
-foreach ($item in $items) {
-    Copy-Item "$srcDir/$item" $tempDir -ErrorAction SilentlyContinue
-}
-
-Copy-Item "$srcDir/language" $tempDir -Recurse
-Copy-Item "$srcDir/doc" $tempDir -Recurse
-
-$fileCount = (Get-ChildItem $tempDir -Recurse | Measure-Object).Count
-Write-Host "  一時ディレクトリ作成: $tempDir ($fileCount ファイル)" -ForegroundColor Green
-
-$zipPath = "JPEGView-nt-${Version}_x64.zip"
-if (Test-Path $zipPath) {
-    Remove-Item $zipPath -Force
-}
-Compress-Archive -Path "$tempDir\*" -DestinationPath $zipPath -CompressionLevel Optimal
-
-$zipSize = (Get-Item $zipPath).Length / 1MB
-Write-Host "  zip 作成完了: $zipPath ($([Math]::Round($zipSize, 2)) MB)" -ForegroundColor Green
 
 # =============================================================================
 # リリース
@@ -237,7 +167,8 @@ Write-Host "  zip 作成完了: $zipPath ($([Math]::Round($zipSize, 2)) MB)" -Fo
 
 if ($SkipRelease) {
     Write-Host "==> GitHub リリース作成スキップ（-SkipRelease 指定）" -ForegroundColor Yellow
-} else {
+}
+else {
     Write-Host "==> GitHub リリース作成中..." -ForegroundColor Cyan
 
     # release-notes.txt の存在確認
@@ -248,21 +179,36 @@ if ($SkipRelease) {
 
     # git tag
     git tag "v$Version"
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "git tag に失敗しました（Exit code: $LASTEXITCODE）"
+        exit 1
+    }
     Write-Host "  git tag 作成: v$Version" -ForegroundColor Green
 
     # git push
     git push aviscaerulea master
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "git push (master) に失敗しました（Exit code: $LASTEXITCODE）"
+        exit 1
+    }
     Write-Host "  git push 完了: aviscaerulea/master" -ForegroundColor Green
 
     git push aviscaerulea "v$Version"
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "git push (tag) に失敗しました（Exit code: $LASTEXITCODE）"
+        exit 1
+    }
     Write-Host "  git push 完了: aviscaerulea/v$Version" -ForegroundColor Green
 
-    # gh release create
+    # gh release create（ビルド成果物は GitHub Actions が後付けでアップロード）
     gh release create "v$Version" `
         --repo aviscaerulea/jpegview-nt `
         --title "v$Version" `
-        --notes-file release-notes.txt `
-        $zipPath
+        --notes-file release-notes.txt
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "gh release create に失敗しました（Exit code: $LASTEXITCODE）"
+        exit 1
+    }
 
     Write-Host "  GitHub リリース作成完了: v$Version" -ForegroundColor Green
 
