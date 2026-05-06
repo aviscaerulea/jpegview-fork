@@ -16,6 +16,9 @@ jobs:
         with:
           ref: ${{ github.event.release.tag_name }}
 
+      - name: Initialize WTL submodule
+        uses: ./.github/actions/wtl-submodule
+
       - name: Extract version
         id: version
         shell: bash
