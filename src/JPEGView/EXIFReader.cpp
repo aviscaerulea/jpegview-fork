@@ -2,6 +2,22 @@
 #include "EXIFReader.h"
 #include "ImageProcessingTypes.h"
 #include "Helpers.h"
+#include <cstdio>
+#include <windows.h>
+
+static void EXIFTrace(const char* fmt, ...) {
+	char msg[512];
+	va_list args;
+	va_start(args, fmt);
+	_vsnprintf_s(msg, sizeof(msg), _TRUNCATE, fmt, args);
+	va_end(args);
+	char path[MAX_PATH];
+	GetTempPathA(MAX_PATH, path);
+	strcat_s(path, "jpegview-nt-trace.log");
+	FILE* f = nullptr;
+	fopen_s(&f, path, "a");
+	if (f) { fputs(msg, f); fputc('\n', f); fclose(f); }
+}
 
 double CEXIFReader::UNKNOWN_DOUBLE_VALUE = 283740261.192864;
 
@@ -265,11 +281,14 @@ CEXIFReader::CEXIFReader(void* pApp1Block, EImageFormat eImageFormat)
 	m_dAltitude = UNKNOWN_DOUBLE_VALUE;
 
 	m_pApp1 = (uint8*)pApp1Block;
+	EXIFTrace("[EXIF] CEXIFReader ctor  pApp1=%p", m_pApp1);
 	// APP1 marker
 	if (m_pApp1[0] != 0xFF || m_pApp1[1] != 0xE1) {
+		EXIFTrace("[EXIF] not APP1 marker -> return");
 		return;
 	}
 	int nApp1Size = m_pApp1[2]*256 + m_pApp1[3] + 2;
+	EXIFTrace("[EXIF] app1Size=%d", nApp1Size);
 
 	// Read TIFF header
 	uint8* pTIFFHeader = m_pApp1 + 10;
@@ -402,22 +421,27 @@ CEXIFReader::CEXIFReader(void* pApp1Block, EImageFormat eImageFormat)
 
 
 	if (nOffsetIFD1 != 0) {
+		EXIFTrace("[EXIF] IFD1 start  nOffsetIFD1=%u  app1Size=%d", nOffsetIFD1, nApp1Size);
 		m_pIFD1 = pTIFFHeader + nOffsetIFD1;
 		if (m_pIFD1 - m_pApp1 >= nApp1Size || m_pIFD1 - m_pApp1 < 0) {
+			EXIFTrace("[EXIF] IFD1 offset out of bounds -> return");
 			return;
 		}
 		nNumTags = ReadUShort(m_pIFD1, bLittleEndian);
 		m_pIFD1 += 2;
 		uint8* pLastIFD1 = m_pIFD1 + nNumTags*12;
 		if (pLastIFD1 - m_pApp1 >= nApp1Size) {
+			EXIFTrace("[EXIF] IFD1 tag range out of bounds -> return");
 			return;
 		}
 		m_pLastIFD1 = pLastIFD1;
 		uint8* pTagCompression = FindTag(m_pIFD1, pLastIFD1, 0x103, bLittleEndian);
 		if (pTagCompression == NULL) {
+			EXIFTrace("[EXIF] IFD1 compression tag not found -> return");
 			return;
 		}
 		if (ReadShortTag(pTagCompression, bLittleEndian) == 6) {
+			EXIFTrace("[EXIF] IFD1 compressed thumbnail");
 			// compressed
 			uint8* pTagOffsetSOI = FindTag(m_pIFD1, pLastIFD1, 0x0201, bLittleEndian);
 			uint8* pTagJPEGLen = FindTag(m_pIFD1, pLastIFD1, 0x0202, bLittleEndian);
@@ -425,12 +449,16 @@ CEXIFReader::CEXIFReader(void* pApp1Block, EImageFormat eImageFormat)
 				uint32 nOffsetSOI = ReadLongTag(pTagOffsetSOI, bLittleEndian);
 				uint32 nJPEGBytes = ReadLongTag(pTagJPEGLen, bLittleEndian);
 				uint8* pSOI = pTIFFHeader + nOffsetSOI;
+				EXIFTrace("[EXIF] thumbnail SOI rel_offset=%u  nJPEGBytes=%u  pSOI-app1=%td  app1Size=%d",
+					nOffsetSOI, nJPEGBytes, pSOI - m_pApp1, nApp1Size);
 				uint8* pSOF = (uint8*) Helpers::FindJPEGMarker(pSOI, nJPEGBytes, 0xC0);
+				EXIFTrace("[EXIF] FindJPEGMarker(SOF0) returned %p", pSOF);
 				if (pSOF != NULL) {
 					m_nThumbWidth = pSOF[7]*256 + pSOF[8];
 					m_nThumbHeight = pSOF[5]*256 + pSOF[6];
 					m_nJPEGThumbStreamLen = nJPEGBytes;
 					m_bHasJPEGCompressedThumbnail = true;
+					EXIFTrace("[EXIF] thumb size %dx%d", m_nThumbWidth, m_nThumbHeight);
 				}
 			}
 		} else {
@@ -443,6 +471,8 @@ CEXIFReader::CEXIFReader(void* pApp1Block, EImageFormat eImageFormat)
 			}
 		}
 	}
+	EXIFTrace("[EXIF] CEXIFReader ctor done  thumbW=%d thumbH=%d hasJPEGThumb=%d",
+		m_nThumbWidth, m_nThumbHeight, (int)m_bHasJPEGCompressedThumbnail);
 }
 
 CEXIFReader::~CEXIFReader(void) {

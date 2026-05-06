@@ -493,9 +493,30 @@ void CImageLoadThread::DeleteCachedAvifDecoder() {
 #endif
 }
 
+// 診断トレースログ（%TEMP%\jpegview-nt-trace.log に追記）
+static void TraceLog(const char* fmt, ...) {
+	char msg[512];
+	va_list args;
+	va_start(args, fmt);
+	_vsnprintf_s(msg, sizeof(msg), _TRUNCATE, fmt, args);
+	va_end(args);
+
+	char path[MAX_PATH];
+	GetTempPathA(MAX_PATH, path);
+	strcat_s(path, "jpegview-nt-trace.log");
+	FILE* f = nullptr;
+	fopen_s(&f, path, "a");
+	if (f) { fputs(msg, f); fputc('\n', f); fclose(f); }
+}
+
 void CImageLoadThread::ProcessReadJPEGRequest(CRequest * request) {
+	char mbFileName[512] = {};
+	WideCharToMultiByte(CP_UTF8, 0, request->FileName, -1, mbFileName, sizeof(mbFileName)-1, nullptr, nullptr);
+	TraceLog("[JPEG] START: %s", mbFileName);
+
 	HANDLE hFile = ::CreateFile(request->FileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 	if (hFile == INVALID_HANDLE_VALUE) {
+		TraceLog("[JPEG] CreateFile FAILED");
 		return;
 	}
 
@@ -543,8 +564,11 @@ void CImageLoadThread::ProcessReadJPEGRequest(CRequest * request) {
 				bool bOutOfMemory;
 				// int nTicks = ::GetTickCount();
 
+				TraceLog("[JPEG] calling TurboJpeg::ReadImage  filesize=%lld", nFileSize);
 				void* pPixelData = TurboJpeg::ReadImage(nWidth, nHeight, nBPP, eChromoSubSampling, bOutOfMemory, pBuffer, nFileSize);
-				
+				TraceLog("[JPEG] TurboJpeg done  pPixels=%p w=%d h=%d bpp=%d subsamp=%d oom=%d",
+					pPixelData, nWidth, nHeight, nBPP, (int)eChromoSubSampling, (int)bOutOfMemory);
+
 				/*
 				TCHAR buffer[20];
 				_stprintf_s(buffer, 20, _T("%d"), ::GetTickCount() - nTicks);
@@ -553,25 +577,34 @@ void CImageLoadThread::ProcessReadJPEGRequest(CRequest * request) {
 
 				// Color and b/w JPEG is supported
 				if (pPixelData != NULL && (nBPP == 3 || nBPP == 1)) {
-					request->Image = new CJPEGImage(nWidth, nHeight, pPixelData, 
-						Helpers::FindEXIFBlock(pBuffer, nFileSize), nBPP, 
+					void* pEXIF = Helpers::FindEXIFBlock(pBuffer, nFileSize);
+					TraceLog("[JPEG] FindEXIFBlock=%p  calling CJPEGImage ctor", pEXIF);
+					request->Image = new CJPEGImage(nWidth, nHeight, pPixelData,
+						pEXIF, nBPP,
 						Helpers::CalculateJPEGFileHash(pBuffer, nFileSize), IF_JPEG, false, 0, 1, 0);
+					TraceLog("[JPEG] CJPEGImage ctor done  image=%p", request->Image);
 					request->Image->SetJPEGComment(Helpers::GetJPEGComment(pBuffer, nFileSize));
 					request->Image->SetJPEGChromoSampling(eChromoSubSampling);
+					TraceLog("[JPEG] image setup complete");
 				} else if (bOutOfMemory) {
+					TraceLog("[JPEG] OutOfMemory");
 					request->OutOfMemory = true;
 				} else {
 					// failed, try GDI+
+					TraceLog("[JPEG] TurboJpeg failed -> GDI+ fallback");
 					delete[] pPixelData;
 					ProcessReadGDIPlusRequest(request);
+					TraceLog("[JPEG] GDI+ done  image=%p", request->Image);
 				}
 			}
 		}
 	} catch (...) {
+		TraceLog("[JPEG] EXCEPTION CAUGHT in ProcessReadJPEGRequest");
 		delete request->Image;
 		request->Image = NULL;
 		request->ExceptionError = true;
 	}
+	TraceLog("[JPEG] END");
 	::CloseHandle(hFile);
 	if (pBuffer) ::GlobalUnlock(hFileBuffer);
 	if (hFileBuffer) ::GlobalFree(hFileBuffer);
