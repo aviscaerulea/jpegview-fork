@@ -161,7 +161,9 @@ CRect CEXIFDisplay::PanelRect() {
 		if (hWndDC == NULL) {
 			return CRect(m_pos, m_size);
 		}
-		CDCHandle dc(hWndDC);
+		// CDC::~CDC は DeleteDC を呼ぶため、Detach して ReleaseDC に一元化する
+		CDC dc;
+		dc.Attach(hWndDC);
 		HelpersGUI::SelectDefaultGUIFont(dc);
 		if (m_hTitleFont == 0)
 			m_hTitleFont = HelpersGUI::CreateBoldFontOfSelectedFont(dc);
@@ -242,6 +244,7 @@ CRect CEXIFDisplay::PanelRect() {
 
 		m_nNoHistogramSize = CSize(m_size.cx - nExpansionX, m_size.cy - nExpansionY);
 		m_nTab1 = nMaxLength1 + m_nGap;
+		dc.Detach();
 		::ReleaseDC(m_hWnd, hWndDC);
 	}
 	return CRect(m_pos, m_size);
