@@ -42,9 +42,6 @@ namespace HelpersGUI {
 	// Selects the default file name font into the given DC.
 	void SelectDefaultFileNameFont(HDC dc);
 
-	// PDF ヒントテキスト用フォント（FileNameFont の 2 倍サイズ）
-	void SelectPdfHintFont(HDC dc);
-
 	// Translates all menu strings of the given menu, including the sub-menus
 	void TranslateMenuStrings(HMENU hMenu, CKeyMap* pKeyMap = NULL);
 

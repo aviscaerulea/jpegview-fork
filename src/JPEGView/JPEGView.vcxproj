@@ -72,7 +72,7 @@
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)..\..\deps\WTL-sf\Include;$(ProjectDir)libpng-apng\include;$(ProjectDir)libjxl\include;$(ProjectDir)\libheif\include;$(ProjectDir)\libwebp\include;$(ProjectDir)\libavif\include;$(ProjectDir)\lcms2\include;$(ProjectDir)\libraw\include;$(IncludePath)</IncludePath>
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)..\..\deps\WTL-sf\Include;$(ProjectDir)libpng-apng\include;$(ProjectDir)libjxl\include;$(ProjectDir)\libheif\include;$(ProjectDir)\libwebp\include;$(ProjectDir)\libavif\include;$(ProjectDir)\lcms2\include;$(ProjectDir)\libraw\include;$(IncludePath)</IncludePath>
     <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)libjpeg-turbo\lib;$(ProjectDir)libpng-apng\lib;$(ProjectDir)libjxl\lib;$(ProjectDir)libheif\lib;$(ProjectDir)libwebp\lib;$(ProjectDir)libavif\lib;$(ProjectDir)lcms2\lib;$(ProjectDir)libraw\lib;$(LibraryPath)</LibraryPath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)libjpeg-turbo\lib64;$(ProjectDir)libpng-apng\lib64;$(ProjectDir)libjxl\lib64;$(ProjectDir)libheif\lib64;$(ProjectDir)libwebp\lib64;$(ProjectDir)libavif\lib64;$(ProjectDir)lcms2\lib64;$(ProjectDir)libraw\lib64;$(ProjectDir)libpdfium\lib64;$(ProjectDir)mimalloc\lib64;$(LibraryPath)</LibraryPath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)libjpeg-turbo\lib64;$(ProjectDir)libpng-apng\lib64;$(ProjectDir)libjxl\lib64;$(ProjectDir)libheif\lib64;$(ProjectDir)libwebp\lib64;$(ProjectDir)libavif\lib64;$(ProjectDir)lcms2\lib64;$(ProjectDir)libraw\lib64;$(ProjectDir)mimalloc\lib64;$(LibraryPath)</LibraryPath>
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)..\..\deps\WTL-sf\Include;$(ProjectDir)libpng-apng\include;$(ProjectDir)libjxl\include;$(ProjectDir)\libheif\include;$(ProjectDir)\libwebp\include;$(ProjectDir)\libavif\include;$(ProjectDir)\lcms2\include;$(ProjectDir)\libraw\include;$(IncludePath)</IncludePath>
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)..\..\deps\WTL-sf\Include;$(ProjectDir)libpng-apng\include;$(ProjectDir)libjxl\include;$(ProjectDir)\libheif\include;$(ProjectDir)\libwebp\include;$(ProjectDir)\libavif\include;$(ProjectDir)\lcms2\include;$(ProjectDir)\libraw\include;$(IncludePath)</IncludePath>
     <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)libjpeg-turbo\lib;$(ProjectDir)libpng-apng\lib;$(ProjectDir)libjxl\lib;$(ProjectDir)libheif\lib;$(ProjectDir)libwebp\lib;$(ProjectDir)libavif\lib;$(ProjectDir)lcms2\lib;$(ProjectDir)libraw\lib;$(LibraryPath)</LibraryPath>
@@ -274,7 +274,7 @@
       <CompileAs>CompileAsCpp</CompileAs>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
-      <AdditionalIncludeDirectories>lunasvg\include;libpdfium\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>lunasvg\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -282,12 +282,12 @@
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>plutovg.lib;lunasvg.lib;pdfium.lib;mimalloc.lib;legacy_stdio_definitions.lib;legacy_stdio_wide_specifiers.lib;gdiplus.lib;WICLoader.lib;turbojpeg-static.lib;libpng16.lib;zlib.lib;jxl_dec.lib;jxl_threads.lib;heif.lib;libwebp.lib;libwebpdemux.lib;avif.lib;lcms2.lib;libraw.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>plutovg.lib;lunasvg.lib;mimalloc.lib;legacy_stdio_definitions.lib;legacy_stdio_wide_specifiers.lib;gdiplus.lib;WICLoader.lib;turbojpeg-static.lib;libpng16.lib;zlib.lib;jxl_dec.lib;jxl_threads.lib;heif.lib;libwebp.lib;libwebpdemux.lib;avif.lib;lcms2.lib;libraw.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>lunasvg\lib64;bin\x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-      <DelayLoadDLLs>pdfium.dll;WICLoader.dll;jxl_dec.dll;jxl_threads.dll;heif.dll;avif.dll;lcms2.dll;libraw.dll</DelayLoadDLLs>
+      <DelayLoadDLLs>WICLoader.dll;jxl_dec.dll;jxl_threads.dll;heif.dll;avif.dll;lcms2.dll;libraw.dll</DelayLoadDLLs>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
@@ -318,7 +318,6 @@
     <ClCompile Include="FileList.cpp" />
     <ClCompile Include="HashCompareLPCTSTR.cpp" />
     <ClCompile Include="HEIFWrapper.cpp" />
-    <ClCompile Include="PDFWrapper.cpp" />
     <ClCompile Include="SVGWrapper.cpp" />
     <ClCompile Include="HelpDlg.cpp" />
     <ClCompile Include="Helpers.cpp" />
@@ -411,7 +410,6 @@
     <ClInclude Include="FileList.h" />
     <ClInclude Include="HashCompareLPCTSTR.h" />
     <ClInclude Include="HEIFWrapper.h" />
-    <ClInclude Include="PDFWrapper.h" />
     <ClInclude Include="SVGWrapper.h" />
     <ClInclude Include="HelpDlg.h" />
     <ClInclude Include="Helpers.h" />

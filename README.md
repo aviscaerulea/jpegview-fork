@@ -1,7 +1,7 @@
 [![Latest GitHub Release](https://img.shields.io/github/v/release/aviscaerulea/jpegview-nt?label=GitHub&style=social)](https://github.com/aviscaerulea/jpegview-nt/releases)[![Downloads](https://badgen.net/github/assets-dl/aviscaerulea/jpegview-nt?cache=3600&color=grey&label=)](#)
 
 **JPEGView-nt** は [sylikc/jpegview](https://github.com/sylikc/jpegview) v1.3.46.0 からフォークした個人カスタマイズ版です。  
-HEIC/HEIF 表示対応、SVG 表示対応、PDF 表紙プレビュー機能、AVX2/マルチスレッドによる CPU 最適化。  
+HEIC/HEIF 表示対応、SVG 表示対応、AVX2/マルチスレッドによる CPU 最適化。  
 他、依存ライブラリを最新版への更新（libjpeg-turbo 3.1.3、libpng 1.6.54、libwebp 1.6.0、libjxl 0.11.1、libheif 1.21.2、LibRaw 0.22.0 など）を行っています。
 
 ## Installation
@@ -34,7 +34,6 @@ JPEGView has built-in support the following formats:
 * Popular: JPEG, GIF
 * Lossless: BMP, PNG, TIFF, PSD
 * Web: WEBP, JXL, HEIF/HEIC, AVIF
-* Documents: PDF (cover page preview)
 * Legacy: TGA, WDP, HDP, JXR
 * Camera RAW formats:
   * Adobe (DNG), Canon (CRW, CR2, CR3), Nikon (NEF, NRW), Sony (ARW, SR2)

@@ -50,9 +50,6 @@ UpgradeLog.htm
 JPEGView-*.zip
 JPEGView-fork-*.zip
 
-# PDFium binaries
-src/JPEGView/libpdfium/bin64/
-
 # Temporary files
 nul
 release-notes.txt

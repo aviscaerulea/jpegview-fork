@@ -261,9 +261,6 @@
     <ClCompile Include="HEIFWrapper.cpp">
       <Filter>Source Files\Image Types</Filter>
     </ClCompile>
-    <ClCompile Include="PDFWrapper.cpp">
-      <Filter>Source Files\Image Types</Filter>
-    </ClCompile>
     <ClCompile Include="SVGWrapper.cpp">
       <Filter>Source Files\Image Types</Filter>
     </ClCompile>
@@ -537,9 +534,6 @@
       <Filter>Header Files\Image Types</Filter>
     </ClInclude>
     <ClInclude Include="HEIFWrapper.h">
-      <Filter>Header Files\Image Types</Filter>
-    </ClInclude>
-    <ClInclude Include="PDFWrapper.h">
       <Filter>Header Files\Image Types</Filter>
     </ClInclude>
     <ClInclude Include="SVGWrapper.h">

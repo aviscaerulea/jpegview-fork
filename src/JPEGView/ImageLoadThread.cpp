@@ -19,7 +19,6 @@
 #include "HEIFWrapper.h"
 #include "AVIFWrapper.h"
 #include "RAWWrapper.h"
-#include "PDFWrapper.h"
 #include "SVGWrapper.h"
 #endif
 #include "WEBPWrapper.h"
@@ -83,8 +82,6 @@ static EImageFormat GetImageFormat(LPCTSTR sFileName) {
 		return IF_QOI;
 	} else if (header[0] == '8' && header[1] == 'B' && header[2] == 'P' && header[3] == 'S') {
 		return IF_PSD;
-	} else if (header[0] == '%' && header[1] == 'P' && header[2] == 'D' && header[3] == 'F') {
-		return IF_PDF;
 	}
 
 	// default fallback if no matches based on magic bytes
@@ -374,14 +371,6 @@ void CImageLoadThread::ProcessRequest(CRequestBase& request) {
 			DeleteCachedJxlDecoder();
 			DeleteCachedAvifDecoder();
 			ProcessReadRAWRequest(&rq);
-			break;
-		case IF_PDF:
-			DeleteCachedGDIBitmap();
-			DeleteCachedWebpDecoder();
-			DeleteCachedPngDecoder();
-			DeleteCachedJxlDecoder();
-			DeleteCachedAvifDecoder();
-			ProcessReadPDFRequest(&rq);
 			break;
 		case IF_SVG:
 			DeleteCachedGDIBitmap();
@@ -1179,52 +1168,6 @@ __declspec(dllimport) unsigned char* __stdcall LoadImageWithWIC(LPCWSTR fileName
 	unsigned int* width, unsigned int* height);
 
 #ifndef WINXP
-
-void CImageLoadThread::ProcessReadPDFRequest(CRequest* request) {
-	HANDLE hFile = ::CreateFile(request->FileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-	if (hFile == INVALID_HANDLE_VALUE) return;
-
-	char* pBuffer = NULL;
-	UINT nPrevErrorMode = SetErrorMode(SEM_FAILCRITICALERRORS);
-	try {
-		long long nFileSize = Helpers::GetFileSize(hFile);
-		if (nFileSize > MAX_PDF_FILE_SIZE) {
-			request->OutOfMemory = true;
-		} else {
-			// ファイル全体をメモリに読み込む
-			pBuffer = new(std::nothrow) char[(size_t)nFileSize];
-			if (pBuffer == NULL) {
-				request->OutOfMemory = true;
-			} else {
-				unsigned int nNumBytesRead;
-				if (::ReadFile(hFile, pBuffer, (DWORD)nFileSize, (LPDWORD)&nNumBytesRead, NULL) && nNumBytesRead == nFileSize) {
-					::CloseHandle(hFile);  // ハンドルを即座にクローズ（デコード前）
-					hFile = INVALID_HANDLE_VALUE;
-
-					int nWidth, nHeight, nBPP;
-					uint8* pPixelData = (uint8*)PdfReader::ReadImage(
-						nWidth, nHeight, nBPP,
-						request->OutOfMemory, pBuffer, (int)nFileSize);
-					if (pPixelData != NULL) {
-						// 表紙のみ: frame_index=0, frame_count=1
-						request->Image = new CJPEGImage(
-							nWidth, nHeight, pPixelData, NULL, nBPP, 0,
-							IF_PDF, false, 0, 1, 0);
-					}
-				}
-			}
-		}
-	} catch (...) {
-		delete request->Image;
-		request->Image = NULL;
-		request->ExceptionError = true;
-	}
-	SetErrorMode(nPrevErrorMode);
-	if (hFile != INVALID_HANDLE_VALUE) {
-		::CloseHandle(hFile);
-	}
-	delete[] pBuffer;
-}
 
 void CImageLoadThread::ProcessReadSVGRequest(CRequest* request) {
 	HANDLE hFile = ::CreateFile(request->FileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
